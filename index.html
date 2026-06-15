@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap');
+
+/* ── 리셋 & 공통 ── */
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { width:400px; background:#fff; font-family:'Nanum Gothic','Apple SD Gothic Neo','맑은 고딕',sans-serif; font-size:13px; color:#111; overflow-x:hidden; }
+
+/* ── 페이지 전환 ── */
+.page { display:none; width:400px; }
+.page.active { display:block; }
+
+/* ══════════════════════════
+   피드 페이지
+══════════════════════════ */
+#page-feed {}
+
+/* 상단 헤더 */
+.feed-topbar { border-bottom:1px solid #dbdbdb; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; background:#fff; position:sticky; top:0; z-index:20; }
+.feed-logo { font-size:20px; font-weight:800; font-style:italic; letter-spacing:-1px; }
+.feed-icons { display:flex; gap:16px; font-size:22px; }
+
+/* 스토리 바 */
+.story-bar { display:flex; gap:14px; padding:12px 14px; overflow-x:auto; border-bottom:1px solid #f0f0f0; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.story-bar::-webkit-scrollbar { display:none; }
+.story-item { display:flex; flex-direction:column; align-items:center; gap:5px; flex-shrink:0; cursor:pointer; }
+.story-ring { width:56px; height:56px; border-radius:50%; background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); padding:2px; }
+.story-inner { width:100%; height:100%; border-radius:50%; background:#ddd; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-size:22px; }
+.story-label { font-size:11px; color:#333; max-width:60px; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+
+/* 프로필 영역 */
+.profile-wrap { padding:16px 16px 0; }
+.profile-row { display:flex; align-items:center; gap:16px; margin-bottom:14px; }
+.profile-avatar-big { width:80px; height:80px; border-radius:50%; background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); padding:3px; flex-shrink:0; }
+.profile-avatar-big .inner { width:100%;height:100%;border-radius:50%;background:#c8a882;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:32px; }
+.profile-stats { flex:1; display:flex; gap:0; }
+.stat-item { flex:1; text-align:center; }
+.stat-num { font-size:16px; font-weight:800; display:block; }
+.stat-label { font-size:11px; color:#555; }
+
+.profile-name { font-weight:800; font-size:14px; margin-bottom:3px; }
+.profile-bio { font-size:12.5px; line-height:1.6; color:#333; margin-bottom:10px; }
+.profile-email { font-size:12px; color:#0095f6; margin-bottom:12px; }
+
+.profile-btns { display:flex; gap:8px; margin-bottom:14px; }
+.btn-edit { flex:1; border:1px solid #dbdbdb; border-radius:8px; padding:7px 0; font-size:13px; font-weight:700; text-align:center; cursor:pointer; background:#fff; }
+.btn-share { flex:1; border:1px solid #dbdbdb; border-radius:8px; padding:7px 0; font-size:13px; font-weight:700; text-align:center; cursor:pointer; background:#fff; }
+
+/* 하이라이트 */
+.highlights { display:flex; gap:14px; padding:0 16px 14px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; border-bottom:1px solid #dbdbdb; }
+.highlights::-webkit-scrollbar { display:none; }
+.hl-item { display:flex; flex-direction:column; align-items:center; gap:5px; flex-shrink:0; cursor:pointer; }
+.hl-ring { width:60px; height:60px; border-radius:50%; border:1px solid #dbdbdb; display:flex; align-items:center; justify-content:center; font-size:26px; background:#fafafa; }
+.hl-label { font-size:11px; color:#333; }
+
+/* 그리드 탭 */
+.grid-tabs { display:flex; border-bottom:1px solid #dbdbdb; }
+.grid-tab { flex:1; display:flex; align-items:center; justify-content:center; padding:10px 0; font-size:22px; cursor:pointer; border-bottom:2px solid transparent; }
+.grid-tab.active { border-bottom-color:#111; }
+
+/* 피드 그리드 */
+.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
+.grid-cell { aspect-ratio:1; cursor:pointer; position:relative; overflow:hidden; }
+.grid-cell .thumb { width:100%; height:100%; object-fit:cover; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; text-align:center; padding:8px; line-height:1.4; }
+.grid-cell .multi-icon { position:absolute; top:6px; right:6px; color:#fff; font-size:14px; text-shadow:0 1px 3px rgba(0,0,0,.5); }
+
+/* ══════════════════════════
+   게시물 상세 페이지
+══════════════════════════ */
+.post-page {}
+
+/* 상세 상단 바 */
+.detail-topbar { border-bottom:1px solid #dbdbdb; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; background:#fff; position:sticky; top:0; z-index:20; }
+.back-btn { font-size:26px; cursor:pointer; line-height:1; padding:2px 4px; }
+.detail-uname { font-size:15px; font-weight:800; }
+.detail-more { font-size:22px; cursor:pointer; }
+
+/* 게시물 프로필 헤더 */
+.post-header { padding:10px 14px; display:flex; align-items:center; gap:10px; }
+.post-av { width:36px; height:36px; border-radius:50%; background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); padding:2px; flex-shrink:0; }
+.post-av .inner { width:100%; height:100%; border-radius:50%; background:#c8a882; border:2px solid #fff; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.post-uname-wrap .pname { font-weight:800; font-size:13px; }
+.post-uname-wrap .ploc  { font-size:11px; color:#888; }
+.post-follow-btn { margin-left:auto; color:#0095f6; font-size:13px; font-weight:700; cursor:pointer; }
+
+/* 게시물 이미지 영역 */
+.post-img { width:100%; aspect-ratio:1; display:flex; align-items:center; justify-content:center; }
+.post-img-placeholder { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:#fff; text-align:center; gap:10px; padding:24px; line-height:1.5; }
+
+/* 반응 */
+.post-reactions { padding:10px 14px 4px; display:flex; justify-content:space-between; align-items:center; }
+.react-left { display:flex; gap:16px; font-size:24px; }
+.react-left span { cursor:pointer; }
+.post-likes { padding:0 14px 4px; font-size:13px; font-weight:800; }
+
+/* 캡션 */
+.post-caption { padding:4px 14px 8px; font-size:13px; line-height:1.8; word-break:keep-all; }
+.post-caption .uname { font-weight:800; margin-right:6px; }
+.post-caption .hashtag { color:#0095f6; }
+
+/* 댓글 보기 */
+.see-all-comments { padding:2px 14px 6px; font-size:13px; color:#aaa; cursor:pointer; }
+
+/* 댓글 */
+.post-comments { padding:4px 14px 10px; }
+.cmt { margin-bottom:9px; font-size:13px; line-height:1.65; word-break:keep-all; }
+.cmt .uname { font-weight:800; margin-right:6px; }
+.cmt .cmeta { font-size:10px; color:#aaa; margin-top:2px; }
+.cmt.brand .uname { color:#1a3a6b; }
+
+/* 날짜 */
+.post-date { padding:2px 14px 12px; font-size:10px; color:#aaa; text-transform:uppercase; }
+
+/* 댓글 입력 */
+.comment-input-bar { border-top:1px solid #dbdbdb; padding:10px 14px; display:flex; align-items:center; gap:10px; background:#fff; position:sticky; bottom:0; }
+.ci-avatar { width:28px; height:28px; border-radius:50%; background:#ddd; display:flex; align-items:center; justify-content:center; font-size:13px; }
+.ci-placeholder { flex:1; font-size:13px; color:#aaa; }
+.ci-post { color:#0095f6; font-size:13px; font-weight:700; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     피드 페이지
+════════════════════════════════════ -->
+<div id="page-feed" class="page active">
+
+  <div class="feed-topbar">
+    <div class="feed-logo">Instagram</div>
+    <div class="feed-icons"><span>➕</span><span>❤️</span><span>✈️</span></div>
+  </div>
+
+  <!-- 스토리 -->
+  <div class="story-bar">
+    <div class="story-item">
+      <div class="story-ring"><div class="story-inner">🧡</div></div>
+      <div class="story-label">내 스토리</div>
+    </div>
+    <div class="story-item">
+      <div class="story-ring"><div class="story-inner">✨</div></div>
+      <div class="story-label">일상</div>
+    </div>
+    <div class="story-item">
+      <div class="story-ring"><div class="story-inner">💄</div></div>
+      <div class="story-label">뷰티</div>
+    </div>
+    <div class="story-item">
+      <div class="story-ring"><div class="story-inner">🍜</div></div>
+      <div class="story-label">먹방</div>
+    </div>
+    <div class="story-item">
+      <div class="story-ring"><div class="story-inner">🎓</div></div>
+      <div class="story-label">대학생활</div>
+    </div>
+    <div class="story-item">
+      <div class="story-ring"><div class="story-inner">🌙</div></div>
+      <div class="story-label">감성</div>
+    </div>
+  </div>
+
+  <!-- 프로필 -->
+  <div class="profile-wrap">
+    <div class="profile-row">
+      <div class="profile-avatar-big"><div class="inner">🧡</div></div>
+      <div class="profile-stats">
+        <div class="stat-item"><span class="stat-num">84</span><span class="stat-label">게시물</span></div>
+        <div class="stat-item"><span class="stat-num">52.1만</span><span class="stat-label">팔로워</span></div>
+        <div class="stat-item"><span class="stat-num">312</span><span class="stat-label">팔로잉</span></div>
+      </div>
+    </div>
+    <div class="profile-name">A양</div>
+    <div class="profile-bio">대학생 · 뷰티 크리에이터 | 아영이의 일상 · 뷰티 · 먹방 🍜</div>
+    <div class="profile-email">ayoung.collab@gmail.com</div>
+    <div class="profile-btns">
+      <div class="btn-edit">프로필 편집</div>
+      <div class="btn-share">프로필 공유</div>
+    </div>
+  </div>
+
+  <!-- 하이라이트 -->
+  <div class="highlights">
+    <div class="hl-item"><div class="hl-ring">✨</div><div class="hl-label">일상</div></div>
+    <div class="hl-item"><div class="hl-ring">💄</div><div class="hl-label">뷰티</div></div>
+    <div class="hl-item"><div class="hl-ring">🍜</div><div class="hl-label">먹방</div></div>
+    <div class="hl-item"><div class="hl-ring">🎓</div><div class="hl-label">대학생활</div></div>
+    <div class="hl-item"><div class="hl-ring">🌙</div><div class="hl-label">감성</div></div>
+  </div>
+
+  <!-- 그리드 탭 -->
+  <div class="grid-tabs">
+    <div class="grid-tab active">⊞</div>
+    <div class="grid-tab">🎬</div>
+    <div class="grid-tab">🏷️</div>
+  </div>
+
+  <!-- 피드 그리드 -->
+  <div class="grid">
+    <!-- 1: 해명글 (검정 배경, 흰 텍스트) -->
+    <div class="grid-cell" onclick="showPost('p0')">
+      <div class="thumb" style="background:#000; font-size:14px; letter-spacing:2px;">사과드립니다</div>
+    </div>
+    <!-- 2: 감성일상 -->
+    <div class="grid-cell" onclick="showPost('p1')">
+      <div class="thumb" style="background:linear-gradient(135deg,#1a1a2e,#16213e,#2c3e50);">🌙<br><span style="font-size:11px;margin-top:4px;display:block;">야경</span></div>
+    </div>
+    <!-- 3: 라멘 -->
+    <div class="grid-cell" onclick="showPost('p2')">
+      <div class="thumb" style="background:linear-gradient(135deg,#c0392b,#e74c3c,#e67e22);">🍜<br><span style="font-size:11px;margin-top:4px;display:block;">라멘</span></div>
+    </div>
+    <!-- 4: 카페 -->
+    <div class="grid-cell" onclick="showPost('p3')">
+      <div class="thumb" style="background:linear-gradient(135deg,#8d6e63,#a1887f,#bcaaa4);">☕<br><span style="font-size:11px;margin-top:4px;display:block;">카페</span></div>
+    </div>
+    <!-- 5: 도서관 -->
+    <div class="grid-cell" onclick="showPost('p4')">
+      <div class="thumb" style="background:linear-gradient(135deg,#2e7d32,#388e3c,#43a047);">📚<br><span style="font-size:11px;margin-top:4px;display:block;">도서관</span></div>
+    </div>
+    <!-- 6: 협찬게시물 -->
+    <div class="grid-cell" onclick="showPost('p5')">
+      <div class="thumb" style="background:linear-gradient(135deg,#f8bbd0,#f48fb1,#f06292);">💄<br><span style="font-size:11px;margin-top:4px;display:block;">뷰티</span></div>
+    </div>
+  </div>
+
+</div><!-- /page-feed -->
+
+
+<!-- ════════════════════════════════════
+     게시물 상세: p0 — 해명글
+════════════════════════════════════ -->
+<div id="page-p0" class="page">
+  <div class="detail-topbar">
+    <span class="back-btn" onclick="goBack()">‹</span>
+    <span class="detail-uname">a_younglife</span>
+    <span class="detail-more">⋯</span>
+  </div>
+  <div class="post-header">
+    <div class="post-av"><div class="inner">🧡</div></div>
+    <div class="post-uname-wrap">
+      <div class="pname">a_younglife</div>
+    </div>
+    <div class="post-follow-btn">팔로우</div>
+  </div>
+  <div class="post-img">
+    <div class="post-img-placeholder" style="background:#000; font-size:32px; letter-spacing:4px;">사과드립니다</div>
+  </div>
+  <div class="post-reactions">
+    <div class="react-left"><span>🤍</span><span>💬</span><span>📤</span></div>
+    <span style="font-size:24px;cursor:pointer;">🔖</span>
+  </div>
+  <div class="post-likes">좋아요 31,204개</div>
+  <div class="post-caption">
+    <span class="uname">a_younglife</span>아이촉촉해 세럼의 광고 논란에 대해 사과드립니다. 저도 너무 당황스러워서... 대응이 늦어졌어요. 팔로워 여러분께 혼란을 드린 점 진심으로 사과드립니다. 정말 이런 일이 생길 줄 몰랐어요. 하... 왜 저한테 이러시는 건지.. 당분간 SNS 활동을 쉬겠습니다. 다시 한번 죄송합니다.<br>
+    <span class="hashtag">#입장문 #죄송합니다</span>
+  </div>
+  <div class="see-all-comments">댓글 4개 모두 보기</div>
+  <div class="post-comments">
+    <div class="cmt"><span class="uname">truth_watcher99</span>광고 표시 없앤 건 본인인데 억울하다네 ㅋㅋㅋ<div class="cmeta">9월 4일</div></div>
+    <div class="cmt"><span class="uname">support_ayoung</span>언니 힘내요ㅠ 아이촉촉해 불매할게요<div class="cmeta">9월 4일</div></div>
+    <div class="cmt"><span class="uname">bab_ko_</span>이게 사과문임? 지 억울하단 내용만 있는데?<div class="cmeta">9월 4일</div></div>
+    <div class="cmt"><span class="uname">hyun_02_</span>협찬이면 #광고 꼭 달아야 하는 거 몰랐어요?<div class="cmeta">9월 4일</div></div>
+  </div>
+  <div class="post-date">2024년 9월 4일</div>
+  <div class="comment-input-bar">
+    <div class="ci-avatar">🧡</div>
+    <div class="ci-placeholder">댓글 달기...</div>
+    <span class="ci-post">게시</span>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     게시물 상세: p1 — 감성일상
+════════════════════════════════════ -->
+<div id="page-p1" class="page">
+  <div class="detail-topbar">
+    <span class="back-btn" onclick="goBack()">‹</span>
+    <span class="detail-uname">a_younglife</span>
+    <span class="detail-more">⋯</span>
+  </div>
+  <div class="post-header">
+    <div class="post-av"><div class="inner">🧡</div></div>
+    <div class="post-uname-wrap">
+      <div class="pname">a_younglife</div>
+      <div class="ploc">서울 야경</div>
+    </div>
+    <div class="post-follow-btn">팔로우</div>
+  </div>
+  <div class="post-img">
+    <div class="post-img-placeholder" style="background:linear-gradient(135deg,#1a1a2e,#16213e,#2c3e50); font-size:48px;">🌙</div>
+  </div>
+  <div class="post-reactions">
+    <div class="react-left"><span>🤍</span><span>💬</span><span>📤</span></div>
+    <span style="font-size:24px;cursor:pointer;">🔖</span>
+  </div>
+  <div class="post-likes">좋아요 9,103개</div>
+  <div class="post-caption">
+    <span class="uname">a_younglife</span>오늘 하루도 수고했다 나야 🌙 요즘 뭔가 복잡한 일들이 많은데 그냥 다 잘 될 거라고 믿고 싶다. 여러분도 오늘 하루 고생 많으셨어요.<br>
+    <span class="hashtag">#일상 #감성 #야경</span>
+  </div>
+  <div class="see-all-comments">댓글 2개 모두 보기</div>
+  <div class="post-comments">
+    <div class="cmt"><span class="uname">sora_daily</span>언니 무슨 일 있어요?ㅠ 힘내요<div class="cmeta">8월 30일</div></div>
+    <div class="cmt"><span class="uname">jiyeon_02</span>저도 요즘 힘든데 언니 글 보고 위로됐어요<div class="cmeta">8월 30일</div></div>
+  </div>
+  <div class="post-date">2024년 8월 30일</div>
+  <div class="comment-input-bar">
+    <div class="ci-avatar">🧡</div>
+    <div class="ci-placeholder">댓글 달기...</div>
+    <span class="ci-post">게시</span>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     게시물 상세: p2 — 라멘
+════════════════════════════════════ -->
+<div id="page-p2" class="page">
+  <div class="detail-topbar">
+    <span class="back-btn" onclick="goBack()">‹</span>
+    <span class="detail-uname">a_younglife</span>
+    <span class="detail-more">⋯</span>
+  </div>
+  <div class="post-header">
+    <div class="post-av"><div class="inner">🧡</div></div>
+    <div class="post-uname-wrap">
+      <div class="pname">a_younglife</div>
+      <div class="ploc">신촌 홍라멘</div>
+    </div>
+    <div class="post-follow-btn">팔로우</div>
+  </div>
+  <div class="post-img">
+    <div class="post-img-placeholder" style="background:linear-gradient(135deg,#c0392b,#e74c3c,#e67e22); font-size:56px;">🍜</div>
+  </div>
+  <div class="post-reactions">
+    <div class="react-left"><span>🤍</span><span>💬</span><span>📤</span></div>
+    <span style="font-size:24px;cursor:pointer;">🔖</span>
+  </div>
+  <div class="post-likes">좋아요 8,302개</div>
+  <div class="post-caption">
+    <span class="uname">a_younglife</span>오늘 친구들이랑 신촌 라멘집 다녀왔는데 진짜 맛있었어ㅠㅠ 국물이 너무 진해서 뚝딱했음.. 요즘 학교 과제 때문에 정신없는데 이런 거 먹으면 힐링이 되는 듯 🍜<br>
+    <span class="hashtag">#신촌맛집 #라멘맛집 #대학생일상</span>
+  </div>
+  <div class="see-all-comments">댓글 2개 모두 보기</div>
+  <div class="post-comments">
+    <div class="cmt"><span class="uname">univ_friend_sora</span>나도 데려가줘ㅠㅠ<div class="cmeta">8월 21일</div></div>
+    <div class="cmt"><span class="uname">foodie_jeongwoo</span>거기 어디에요?? 주소 알 수 있을까요<div class="cmeta">8월 21일</div></div>
+  </div>
+  <div class="post-date">2024년 8월 21일</div>
+  <div class="comment-input-bar">
+    <div class="ci-avatar">🧡</div>
+    <div class="ci-placeholder">댓글 달기...</div>
+    <span class="ci-post">게시</span>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     게시물 상세: p3 — 카페
+════════════════════════════════════ -->
+<div id="page-p3" class="page">
+  <div class="detail-topbar">
+    <span class="back-btn" onclick="goBack()">‹</span>
+    <span class="detail-uname">a_younglife</span>
+    <span class="detail-more">⋯</span>
+  </div>
+  <div class="post-header">
+    <div class="post-av"><div class="inner">🧡</div></div>
+    <div class="post-uname-wrap">
+      <div class="pname">a_younglife</div>
+      <div class="ploc">성수동 카페</div>
+    </div>
+    <div class="post-follow-btn">팔로우</div>
+  </div>
+  <div class="post-img">
+    <div class="post-img-placeholder" style="background:linear-gradient(135deg,#8d6e63,#a1887f,#bcaaa4); font-size:56px;">☕</div>
+  </div>
+  <div class="post-reactions">
+    <div class="react-left"><span>🤍</span><span>💬</span><span>📤</span></div>
+    <span style="font-size:24px;cursor:pointer;">🔖</span>
+  </div>
+  <div class="post-likes">좋아요 7,448개</div>
+  <div class="post-caption">
+    <span class="uname">a_younglife</span>성수동 갬성 카페 발견!! 라떼가 너무 맛있어서 두 잔 마심.. 주말에 여기 또 오고 싶다 🥐<br>
+    <span class="hashtag">#성수동카페 #카페투어 #주말일상</span>
+  </div>
+  <div class="see-all-comments">댓글 보기</div>
+  <div class="post-comments">
+  </div>
+  <div class="post-date">2024년 7월 6일</div>
+  <div class="comment-input-bar">
+    <div class="ci-avatar">🧡</div>
+    <div class="ci-placeholder">댓글 달기...</div>
+    <span class="ci-post">게시</span>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     게시물 상세: p4 — 도서관
+════════════════════════════════════ -->
+<div id="page-p4" class="page">
+  <div class="detail-topbar">
+    <span class="back-btn" onclick="goBack()">‹</span>
+    <span class="detail-uname">a_younglife</span>
+    <span class="detail-more">⋯</span>
+  </div>
+  <div class="post-header">
+    <div class="post-av"><div class="inner">🧡</div></div>
+    <div class="post-uname-wrap">
+      <div class="pname">a_younglife</div>
+      <div class="ploc">도서관</div>
+    </div>
+    <div class="post-follow-btn">팔로우</div>
+  </div>
+  <div class="post-img">
+    <div class="post-img-placeholder" style="background:linear-gradient(135deg,#2e7d32,#388e3c,#43a047); font-size:56px;">📚</div>
+  </div>
+  <div class="post-reactions">
+    <div class="react-left"><span>🤍</span><span>💬</span><span>📤</span></div>
+    <span style="font-size:24px;cursor:pointer;">🔖</span>
+  </div>
+  <div class="post-likes">좋아요 5,621개</div>
+  <div class="post-caption">
+    <span class="uname">a_younglife</span>시험기간 도서관 고정석... 커피 없이는 못 살겠다 ☕ 다들 시험 잘 보고 있나요 파이팅<br>
+    <span class="hashtag">#대학생일상 #시험기간 #도서관</span>
+  </div>
+  <div class="see-all-comments">댓글 보기</div>
+  <div class="post-comments">
+  </div>
+  <div class="post-date">2024년 6월 14일</div>
+  <div class="comment-input-bar">
+    <div class="ci-avatar">🧡</div>
+    <div class="ci-placeholder">댓글 달기...</div>
+    <span class="ci-post">게시</span>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     게시물 상세: p5 — 협찬게시물
+════════════════════════════════════ -->
+<div id="page-p5" class="page">
+  <div class="detail-topbar">
+    <span class="back-btn" onclick="goBack()">‹</span>
+    <span class="detail-uname">a_younglife</span>
+    <span class="detail-more">⋯</span>
+  </div>
+  <div class="post-header">
+    <div class="post-av"><div class="inner">🧡</div></div>
+    <div class="post-uname-wrap">
+      <div class="pname">a_younglife</div>
+      <div class="ploc">서울 마포구</div>
+    </div>
+    <div class="post-follow-btn">팔로우</div>
+  </div>
+  <div class="post-img">
+    <div class="post-img-placeholder" style="background:linear-gradient(135deg,#f8bbd0,#f48fb1,#f06292); font-size:48px; color:#333;">💄<br><span style="font-size:12px;margin-top:6px;display:block;color:#555;">아이촉촉해 🌸</span></div>
+  </div>
+  <div class="post-reactions">
+    <div class="react-left"><span>🤍</span><span>💬</span><span>📤</span></div>
+    <span style="font-size:24px;cursor:pointer;">🔖</span>
+  </div>
+  <div class="post-likes">좋아요 12,847개</div>
+  <div class="post-caption">
+    <span class="uname">a_younglife</span>드디어 찾았다ㅠㅠ 내 인생 찐템!! 어렵게 찾아서 혼자만 알고 싶었는데... 아영단 여러분께만 알려드려요ㅎㅎ<br><br>
+    아이촉촉해 데일리 모이스처 로션 요즘 유명하죠? 쓰고 나서 피부톤이 진짜 3톤은 밝아진 것 같아요!! 미백 효과 실화야..? 베트남 다녀오고 나서 잔뜩 타버린 저의 피부를 되돌려준 구원템...🥹 베트남 다녀오기 전보다 더 하얘진 것 같지 않나요 ㅋㅋㅋ<br><br>
+    아침저녁으로 꾸준히 발랐더니 확실히 달라진 게 느껴져요. 이건 꼭 써보세요~❤️<br>
+    <span class="hashtag">#아이촉촉해 #데일리모이스처로션 #미백추천 #피부톤개선 #뷰티추천</span>
+  </div>
+  <div class="see-all-comments">댓글 325개 모두 보기</div>
+  <div class="post-comments">
+    <div class="cmt"><span class="uname">user_jiyeon02</span>언니만 믿고 살게요! 미백효과 기대기대 ㅎㅎ<div class="cmeta">3월 10일</div></div>
+    <div class="cmt"><span class="uname">skincare_mina</span>혹시 협찬인가요? 표기가 없어서요 🤔<div class="cmeta">3월 10일</div></div>
+    <div class="cmt brand"><span class="uname">a_younglife</span>아니에요~ 제가 직접 써보고 좋아서 올린 거예요 ㅎㅎ<div class="cmeta">3월 10일</div></div>
+    <div class="cmt"><span class="uname">consumer_watch</span>미백 기능성 화장품은 인증 받아야 하는데 확인해보셨나요?<div class="cmeta">3월 11일</div></div>
+    <div class="cmt"><span class="uname">black_</span>얜 뭐 게시물마다 맨날 광고 아니래 ㅋㅋ 다 티 남.<div class="cmeta">3월 11일</div></div>
+  </div>
+  <div class="post-date">2024년 3월 10일</div>
+  <div class="comment-input-bar">
+    <div class="ci-avatar">🧡</div>
+    <div class="ci-placeholder">댓글 달기...</div>
+    <span class="ci-post">게시</span>
+  </div>
+</div>
+
+
+<script>
+// 현재 활성 페이지 추적
+let currentPage = 'page-feed';
+
+function showPost(postId) {
+  // 피드 숨기기
+  document.getElementById(currentPage).classList.remove('active');
+  // 대상 페이지 보이기
+  const target = document.getElementById('page-' + postId);
+  target.classList.add('active');
+  currentPage = 'page-' + postId;
+  // 스크롤 최상단
+  window.scrollTo(0, 0);
+}
+
+function goBack() {
+  // 현재 페이지 숨기기
+  document.getElementById(currentPage).classList.remove('active');
+  // 피드 보이기
+  document.getElementById('page-feed').classList.add('active');
+  currentPage = 'page-feed';
+  window.scrollTo(0, 0);
+}
+
+// 터치 이벤트 패스스루 (onclick과 동일하게 동작)
+document.addEventListener('touchstart', function(){}, {passive: true});
+</script>
+</body>
+</html>
