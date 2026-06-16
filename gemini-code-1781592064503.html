@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사이버 수사 시스템 - IP 검증 및 수사기록</title>
+    <style>
+        /* 기본 레이아웃 스타일 */
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', '맑은 고딕', sans-serif;
+            background-color: #0f172a;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        /* IP 인증 컨테이너 */
+        .container {
+            background-color: #ffffff;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            box-sizing: border-box;
+            margin-bottom: 30px;
+        }
+        .logo-area {
+            color: #1e3a8a;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.5;
+            margin-bottom: 35px;
+        }
+        .input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            color: #1e293b;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            color: #0f172a !important;
+            background-color: #f8fafc !important;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            box-sizing: border-box;
+            outline: none;
+            text-align: center;
+            font-family: Courier, monospace;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+        input[type="text"]:focus {
+            border-color: #1e3a8a;
+            background-color: #ffffff !important;
+        }
+        button {
+            width: 100%;
+            padding: 16px;
+            background-color: #1e3a8a;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        .result-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            display: none;
+            line-height: 1.4;
+        }
+        .success {
+            background-color: #dcfce7 !important;
+            color: #15803d !important;
+            border: 1px solid #bbf7d0;
+        }
+        .error {
+            background-color: #fee2e2 !important;
+            color: #b91c1c !important;
+            border: 1px solid #fecaca;
+        }
+
+        /* ---------------------------------------------------
+           [방문기록] 수사 기록지 영역 스타일 (처음에는 숨김)
+        --------------------------------------------------- */
+        #visitRecordTab {
+            display: none; /* 인증 성공 전까지 숨김 */
+            width: 100%;
+            max-width: 794px;
+            background: #ffffff;
+            color: #111;
+            padding: 40px 50px 50px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            box-sizing: border-box;
+            animation: fadeIn 0.5s ease-out-in;
+        }
+
+        /* 방문기록 상단 탭 표시기 */
+        .tab-header {
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 6px 6px 0 0;
+            border: 1px solid #38bdf8;
+            display: inline-block;
+            margin-bottom: -1px;
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 수사기록지 내부 서식 */
+        .doc-header {
+            text-align: center;
+            border-top: 3px solid #111;
+            border-bottom: 3px solid #111;
+            padding: 14px 0;
+            margin-bottom: 20px;
+        }
+        .doc-header .doc-title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 4px;
+        }
+        .doc-header .doc-subtitle {
+            font-size: 12px;
+            color: #444;
+            margin-top: 4px;
+            letter-spacing: 2px;
+        }
+        .info-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+        .info-box {
+            flex: 1;
+            border: 1px solid #aaa;
+            padding: 8px 14px;
+            font-size: 12px;
+            color: #555;
+        }
+        .info-box .label {
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 4px;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+        /* 입력이 가능하도록 빈칸을 input으로 처리 */
+        .info-box input {
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid #aaa;
+            height: 22px;
+            outline: none;
+            font-size: 13px;
+        }
+        .section {
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .section-title {
+            background: #111;
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 6px 12px;
+            letter-spacing: 1px;
+            margin-bottom: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        table th {
+            background: #f0f0f0;
+            border: 1px solid #aaa;
+            padding: 7px 8px;
+            text-align: center;
+            font-weight: 700;
+        }
+        table td {
+            border: 1px solid #aaa;
+            padding: 2px;
+            height: 30px;
+        }
+        table td input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            padding: 0 4px;
+            box-sizing: border-box;
+            font-size: 12px;
+        }
+        .desc-text {
+            font-size: 11.5px;
+            color: #444;
+            padding: 7px 12px 0;
+            border: 1px solid #aaa;
+            border-bottom: none;
+        }
+        .blank-section {
+            border: 1px solid #aaa;
+            border-top: none;
+            padding: 10px 12px;
+        }
+        .blank-section textarea {
+            width: 100%;
+            height: 100px;
+            border: 1px dashed #bbb;
+            resize: none;
+            outline: none;
+            padding: 8px;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .qa-wrap {
+            border: 1px solid #aaa;
+            border-top: none;
+        }
+        .qa-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid #ddd;
+        }
+        .qa-item:last-child { border-bottom: none; }
+        .qa-q {
+            font-size: 12.5px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #111;
+        }
+        .qa-item textarea {
+            width: 100%;
+            height: 50px;
+            border: none;
+            border-bottom: 1px dashed #bbb;
+            outline: none;
+            resize: none;
+            font-family: inherit;
+            font-size: 13px;
+        }
+        .doc-footer {
+            margin-top: 28px;
+            border-top: 2px solid #111;
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10.5px;
+            color: #666;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="logo-area">🔒 CYBER INVESTIGATION SYSTEM</div>
+        <div class="subtitle">분석 결과서에 명시된 공통 IP 주소를<br>아래 입력창에 정확히 입력하십시오.</div>
+        
+        <div class="input-group">
+            <label for="ipInput">▼ IP 주소 입력칸</label>
+            <input type="text" id="ipInput" placeholder="211.xxx.xxx.xx 형식으로 입력" autocomplete="off">
+        </div>
+        
+        <button onclick="checkIP()">분석 결과 검증</button>
+        
+        <div id="resultBox" class="result-message"></div>
+    </div>
+
+    <div id="tabIndicator" class="tab-header" style="display: none;">📂 방문기록 조정 문서 수신됨</div>
+
+    <div id="visitRecordTab">
+        <div class="doc-header">
+            <div class="doc-title">스테이션 1 수사 기록지</div>
+            <div class="doc-subtitle">사이버 평판관리사 의뢰 수행 보고서</div>
+        </div>
+
+        <div class="info-row">
+            <div class="info-box">
+                <div class="label">팀명</div>
+                <input type="text" placeholder="팀명을 입력하세요">
+            </div>
+            <div class="info-box">
+                <div class="label">수행 날짜</div>
+                <input type="text" placeholder="YYYY.MM.DD">
+            </div>
+            <div class="info-box">
+                <div class="label">담당 수사관</div>
+                <input type="text" placeholder="이름 입력">
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">섹션 1 &nbsp;|&nbsp; 단서 목록 및 판별 결과</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:28%">단서명</th>
+                        <th style="width:22%">출처</th>
+                        <th style="width:14%">신뢰 여부<br>(O / X)</th>
+                        <th style="width:36%">판별 근거</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text" style="text-align:center;"></td><td><input type="text"></td></tr>
+                    <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text" style="text-align:center;"></td><td><input type="text"></td></tr>
+                    <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text" style="text-align:center;"></td><td><input type="text"></td></tr>
+                    <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text" style="text-align:center;"></td><td><input type="text"></td></tr>
+                    <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text" style="text-align:center;"></td><td><input type="text"></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-title">섹션 2 &nbsp;|&nbsp; 삭제 판정 목록</div>
+            <div class="desc-text">※ 거짓 또는 악성으로 판단하여 삭제를 권고하는 정보를 기록하시오.</div>
+            <div class="blank-section">
+                <textarea placeholder="여기에 기입하십시오..."></textarea>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">섹션 3 &nbsp;|&nbsp; 유지 판정 목록</div>
+            <div class="desc-text">※ 사실로 판단하여 유지하는 정보를 기록하시오.</div>
+            <div class="blank-section">
+                <textarea placeholder="여기에 기입하십시오..."></textarea>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">섹션 4 &nbsp;|&nbsp; 핵심 질문</div>
+            <div class="qa-wrap">
+                <div class="qa-item">
+                    <div class="qa-q">Q1. 가장 신뢰하기 어려운 단서는 무엇이었나요? 이유는?</div>
+                    <textarea placeholder="답변을 입력하세요..."></textarea>
+                </div>
+                <div class="qa-item">
+                    <div class="qa-q">Q2. 조작 또는 편집된 것으로 의심되는 단서를 찾았나요?</div>
+                    <textarea placeholder="답변을 입력하세요..."></textarea>
+                </div>
+                <div class="qa-item">
+                    <div class="qa-q">Q3. A양은 피해자인가요, 가해자인가요? 단서를 근거로 답하시오.</div>
+                    <textarea placeholder="답변을 입력하세요..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="doc-footer">
+            <span>국립평창청소년수련원 &nbsp;|&nbsp; 디지털 시민성 함양 프로그램</span>
+            <span>인플루언서 A양 실종 사건</span>
+        </div>
+    </div>
+
+    <script>
+        function checkIP() {
+            const inputVal = document.getElementById('ipInput').value.trim();
+            const resultBox = document.getElementById('resultBox');
+            const visitRecordTab = document.getElementById('visitRecordTab');
+            const tabIndicator = document.getElementById('tabIndicator');
+            
+            // 정답 IP 주소 설정
+            const correctAnswer = "211.002.245.47";
+            
+            resultBox.style.display = "block";
+            
+            if (inputVal === correctAnswer) {
+                resultBox.className = "result-message success";
+                resultBox.innerHTML = "✓ 인증 성공: 동일인 계정 단서 및 수사 기록지가 활성화되었습니다.";
+                
+                // [방문기록 탭 및 수사기록지] 활성화 및 표시
+                tabIndicator.style.display = "block";
+                visitRecordTab.style.display = "block";
+                
+                // 화면을 수사기록지 쪽으로 부드럽게 스크롤
+                setTimeout(() => {
+                    visitRecordTab.scrollIntoView({ behavior: 'smooth' });
+                }, 300);
+
+            } else {
+                resultBox.className = "result-message error";
+                resultBox.innerHTML = "❌ 인증 실패: IP 주소가 일치하지 않습니다.";
+                
+                // 인증 실패 시 다시 숨김
+                tabIndicator.style.display = "none";
+                visitRecordTab.style.display = "none";
+            }
+        }
+
+        // 엔터키 입력 지원
+        document.getElementById('ipInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkIP();
+            }
+        });
+    </script>
+</body>
+</html>
